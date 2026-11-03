@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
+import { syncMonth } from "@/lib/sheetsync";
 import { currentUser, isAdmin } from "@/lib/auth";
 import { loadMonth, rosteredMonth } from "@/lib/source";
 import { addEntry, getEntry, isLogMonth } from "@/lib/entries";
@@ -28,6 +29,7 @@ export async function POST(req) {
   const agent = team?.agents.find((a) => a.name === b.agent);
   if (!team || !agent) return NextResponse.json({ error: "Pick a team and an agent from the list." }, { status: 400 });
   const entry = await addEntry(title, { type, team: team.name, agent: agent.name, client, revenue, by: user.email });
+  after(() => syncMonth(title, user.email)); // write it into the sheet once the answer has gone back
   return NextResponse.json({ entry });
 }
 
@@ -43,5 +45,6 @@ async function upsell(user, b) {
   const revenue = Math.round(Number(raw) * 100) / 100;
   if (raw === "" || !(Number.isFinite(revenue) && revenue > 0 && revenue <= 1e6)) return NextResponse.json({ error: "Enter the upsell amount in dollars." }, { status: 400 });
   const entry = await addEntry(title, { type: "upsell", of: of.id, ofMonth: b.ofMonth, team: of.team, agent: of.agent, client: of.client, revenue, by: user.email });
+  after(() => syncMonth(title, user.email));
   return NextResponse.json({ entry });
 }

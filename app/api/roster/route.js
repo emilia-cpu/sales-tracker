@@ -1,4 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
+import { syncMonth } from "@/lib/sheetsync";
+import { isLogMonth } from "@/lib/entries";
 import { currentUser, isAdmin } from "@/lib/auth";
 import { loadMonth } from "@/lib/source";
 import { parseMonth } from "@/lib/parse";
@@ -62,5 +64,6 @@ export async function POST(req) {
     return NextResponse.json({ error: "Unknown change." }, { status: 400 });
   }
   await saveRoster(b.month, r);
+  if (b.action === "target" && isLogMonth(b.month)) after(() => syncMonth(b.month, user.email)); // targets go into the sheet too
   return NextResponse.json({ ok: true });
 }

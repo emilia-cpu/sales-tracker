@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
+import { syncMonth } from "@/lib/sheetsync";
 import { currentUser, isAdmin } from "@/lib/auth";
 import { getEntry, removeEntry, isLogMonth } from "@/lib/entries";
 
@@ -13,5 +14,6 @@ export async function DELETE(req, { params }) {
   if (!e) return NextResponse.json({ error: "Already removed." }, { status: 404 });
   if (e.by !== user.email && !isAdmin(user)) return NextResponse.json({ error: "Only the person who logged it or an admin can remove it." }, { status: 403 });
   await removeEntry(title, id);
+  after(() => syncMonth(title, user.email));
   return NextResponse.json({ ok: true });
 }
