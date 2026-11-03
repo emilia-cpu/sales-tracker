@@ -11,6 +11,17 @@ export async function POST(req) {
   const user = await currentUser();
   if (!isAdmin(user)) return NextResponse.json({ error: "Only admins can change teams." }, { status: 403 });
   const b = await req.json().catch(() => ({}));
+  // The month's revenue target: { month, action: "revenueTarget", amount }
+  if (b.action === "revenueTarget") {
+    const { tabs } = await loadMonth(b.month, b.month);
+    if (!tabs[b.month]) return NextResponse.json({ error: "Pick a month from the list." }, { status: 400 });
+    const raw = String(b.amount ?? "").replace(/[$,\s]/g, "");
+    const amount = Math.round(Number(raw) * 100) / 100;
+    if (raw === "" || !(Number.isFinite(amount) && amount >= 0 && amount <= 1e8)) return NextResponse.json({ error: "Enter the revenue target in dollars." }, { status: 400 });
+    const r = await getRoster(b.month);
+    await saveRoster(b.month, { ...r, revenueTarget: amount });
+    return NextResponse.json({ ok: true });
+  }
   const agent = String(b.agent || "").replace(/\s+/g, " ").trim().slice(0, 60);
   if (!agent) return NextResponse.json({ error: "Enter the agent's name." }, { status: 400 });
   const { tabs } = await loadMonth(b.month, b.month);

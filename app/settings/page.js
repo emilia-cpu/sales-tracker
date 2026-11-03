@@ -42,6 +42,8 @@ export default async function Settings({ searchParams }) {
     roster = {
       teams: view.teams.map((t) => ({ name: t.name, leader: t.leader, agents: t.agents.map((a) => ({ name: a.name, target: a.target, added: !!a.added, targetSet: !!a.targetSet, sheetTarget: a.sheetTarget ?? null })) })),
       removed: r.removed,
+      revenueTarget: r.revenueTarget,
+      signupTarget: view.floor.target,
     };
   }
 
@@ -50,7 +52,7 @@ export default async function Settings({ searchParams }) {
       <Header me={{ ...user, admin: true }} today={ptISO()} active="settings" />
       {notice && <div className={`notice ${notice.ok ? "ok" : ""}`} role="status">{notice.t}</div>}
       {roster
-        ? <RosterEditor months={months} month={rm} teams={roster.teams} removed={roster.removed} />
+        ? <RosterEditor months={months} month={rm} teams={roster.teams} removed={roster.removed} revenueTarget={roster.revenueTarget} signupTarget={roster.signupTarget} />
         : <section className="card"><div className="card-h"><h2>Teams &amp; agents</h2></div><div className="setbody"><p className="muted">Connect Google Drive first. The teams for each month come from the sheet's month tabs.</p></div></section>}
       <TeamAccess me={user.email} people={await listPeople()} fixed={fixedAdmins()} />
       {/* At the bottom and folded away once it's working; opens by itself when it isn't connected or has a problem. */}

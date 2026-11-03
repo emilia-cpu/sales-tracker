@@ -1,6 +1,6 @@
 "use client";
-// Settings → Teams & agents: the admin adds agents to a team, removes any agent, restores removed ones, and sets
-// each agent's target, month by month. The sheet isn't changed; the dashboard and the "Log a sign-up" form follow these changes.
+// Settings → Teams & agents: the admin sets the month's revenue target, adds agents to a team, removes any agent,
+// restores removed ones, and sets each agent's target, month by month. The sheet isn't changed; the dashboard and the "Log a sign-up" form follow these changes.
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Avatar } from "@/components/Header";
@@ -21,7 +21,35 @@ function TargetBox({ a, busy, onSave }) {
   );
 }
 
-export default function RosterEditor({ months, month, teams, removed }) {
+// The month's revenue target (dollars). The sign-ups target comes from the sheet's "Whole Floor Target".
+function RevenueTarget({ month, value, signupTarget, onSaved }) {
+  const shown = value == null ? "" : String(value);
+  const [v, setV] = useState(shown);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  async function save(e) {
+    e.preventDefault();
+    if (v === "") return setErr("Enter the revenue target.");
+    setBusy(true); setErr("");
+    const res = await fetch("/api/roster", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ month, action: "revenueTarget", amount: v }) });
+    const j = await res.json().catch(() => ({}));
+    setBusy(false);
+    if (!res.ok) return setErr(j.error || "Couldn't save. Try again.");
+    onSaved(`The revenue target for ${month} is now $${Number(v).toLocaleString("en-US")}.`);
+  }
+  return (
+    <form className="revtarget" onSubmit={save}>
+      <div><b>Month targets</b><span>Sign-ups: <strong>{signupTarget}</strong> (from the sheet)</span></div>
+      <label>Revenue target
+        <span className="money-in"><span>$</span><input value={v} onChange={(e) => setV(e.target.value.replace(/[^\d.]/g, ""))} inputMode="decimal" placeholder="0" maxLength={12} aria-label={`Revenue target for ${month}`} /></span>
+      </label>
+      <button className="b pri" disabled={busy || v === shown}>{busy ? "Saving…" : "Save"}</button>
+      {err && <p className="err">{err}</p>}
+    </form>
+  );
+}
+
+export default function RosterEditor({ months, month, teams, removed, revenueTarget, signupTarget }) {
   const router = useRouter();
   const [team, setTeam] = useState("");
   const [agent, setAgent] = useState("");
@@ -59,7 +87,7 @@ export default function RosterEditor({ months, month, teams, removed }) {
   return (
     <section className="card" aria-label="Teams and agents">
       <div className="card-h">
-        <h2>Teams &amp; agents</h2>
+        <h2>Targets, teams &amp; agents</h2>
         <span className="sp" />
         <label className="sel month">
           <span className="sr">Month</span>
@@ -69,7 +97,9 @@ export default function RosterEditor({ months, month, teams, removed }) {
         </label>
       </div>
       <div className="setbody" id="teams">
-        <p className="muted">Add an agent to any team, take one out, or change an agent's target, for <b>{month}</b>. Changes apply to this month only and show on the dashboard and in "Log a sign-up" right away. The sheet itself isn't changed.</p>
+        <p className="muted">Set the revenue target, add an agent to any team, take one out, or change an agent's target, for <b>{month}</b>. Changes apply to this month only and show on the dashboard and in "Log a sign-up" right away. The sheet itself isn't changed.</p>
+
+        <RevenueTarget key={month + revenueTarget} month={month} value={revenueTarget} signupTarget={signupTarget} onSaved={(t) => { setMsg({ ok: true, t }); router.refresh(); }} />
 
         <form className="rosteradd" onSubmit={add}>
           <label>Team

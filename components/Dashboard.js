@@ -43,6 +43,21 @@ export default function Dashboard({ me, today, current, months, month, updated, 
   const [team, setTeam] = useState("all");
   const [toast, setToast] = useState(null);
   const [showAll, setShowAll] = useState(false);
+  const [upFor, setUpFor] = useState(null); // sign-up an admin is adding an upsell to
+  const [upAmt, setUpAmt] = useState("");
+  const [upErr, setUpErr] = useState("");
+
+  // Admins only: an upsell on a client, recorded this month.
+  async function addUpsell(e) {
+    if (upAmt === "" || !(Number(upAmt) > 0)) return setUpErr("Enter the upsell amount.");
+    const res = await fetch("/api/entries", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "upsell", of: e.id, ofMonth: month.title, revenue: upAmt }) });
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok) return setUpErr(j.error || "Couldn't save. Try again.");
+    setUpFor(null); setUpAmt(""); setUpErr("");
+    setToast({ text: `Added a ${usd(j.entry.revenue)} upsell for ${e.client}.`, undo: j.entry });
+    if (month.title !== current) window.location.href = "/";
+    else router.refresh();
+  }
   const [listOpen, setListOpen] = useState(false); // agent list stays closed until someone opens it
   const router = useRouter();
   useEffect(() => {
@@ -141,10 +156,33 @@ export default function Dashboard({ me, today, current, months, month, updated, 
         <div className="split">
           {split && <span><i style={{ background: "var(--blue)" }} />Accounts <strong className="num">{split.accounts}</strong></span>}
           {split && <span><i style={{ background: "var(--u)" }} />Sales <strong className="num">{split.sales}</strong></span>}
-          {month.totals.revenue > 0 && <span><i style={{ background: "var(--g)" }} />Revenue <strong className="num">{usd(month.totals.revenue)}</strong></span>}
           {pc && <span><i className="pacekey" />Expected by today <strong className="num">{pc.expected}</strong>{floor.achieved >= pc.expected ? <em className="ahead">on pace</em> : <em className="behind">{pc.expected - floor.achieved} behind</em>}</span>}
         </div>
       </section>
+
+      {month.logged && (() => {
+        // Revenue against the month's revenue target (set in Settings). Achieved = new sign-ups + upsells.
+        const t = month.revenueTarget, got = month.totals.revenue || 0, up = month.totals.upsell || 0, rp = t > 0 ? Math.round((got / t) * 100) : null;
+        return (
+          <section className="card prog" aria-label="Revenue">
+            <div className="prog-h">
+              <b>Revenue</b>
+              <span>{t > 0 ? <><strong className="num">{usd(got)}</strong> of <strong className="num">{usd(t)}</strong> · <strong className="num">{rp}%</strong></> : <><strong className="num">{usd(got)}</strong> so far</>}</span>
+            </div>
+            <div className="revkpis">
+              <div><span>Target</span><b className="num">{t > 0 ? usd(t) : "—"}</b></div>
+              <div className="g"><span>Achieved</span><b className="num">{usd(got)}</b></div>
+              <div className={t > 0 && got >= t ? "g" : "y"}><span>{t > 0 && got > t ? "Over target" : "Remaining"}</span><b className="num">{t > 0 ? usd(Math.abs(t - got)) : "—"}</b></div>
+            </div>
+            <div className="track"><i style={{ width: `${width(got, t)}%`, background: rp >= 100 ? "var(--g)" : undefined }} /></div>
+            <div className="split">
+              <span><i style={{ background: "var(--blue)" }} />New sign-ups <strong className="num">{usd(got - up)}</strong></span>
+              <span><i style={{ background: "var(--g)" }} />Upsells <strong className="num">{usd(up)}</strong></span>
+              {!(t > 0) && <span className="note">{me.admin ? <><a href="/settings">Set a revenue target</a> in Settings.</> : "No revenue target set for this month yet."}</span>}
+            </div>
+          </section>
+        );
+      })()}
 
       {weeks.length > 0 && (
         <section className="card" aria-label="Weekly targets">
@@ -178,7 +216,7 @@ export default function Dashboard({ me, today, current, months, month, updated, 
                   <Avatar name={t.leader} i={t.i} />
                   <span className="who">
                     <b>{t.name}</b>
-                    <span className="num">{fmt(t.signups)} of {fmt(t.target)} · {t.agents.length} agents{s && ` · ${s.accounts} acc / ${s.sales} sales`}{t.revenue > 0 && ` · ${usd(t.revenue)}`}</span>
+                    <span className="num">{fmt(t.signups)} of {fmt(t.target)} · {t.agents.length} agents{s && ` · ${s.accounts} acc / ${s.sales} sales`}{t.revenue > 0 && ` · ${usd(t.revenue)}`}{t.upsell > 0 && ` (incl. ${usd(t.upsell)} upsell)`}</span>
                     <span className="bar"><i style={{ width: `${width(t.signups, t.target)}%`, background: t.p >= 100 ? "var(--g)" : "var(--blue)" }} /></span>
                   </span>
                   <span className={`pc num ${t.p >= 100 ? "done" : ""}`}>{t.p == null ? "—" : `${t.p}%`}</span>
@@ -207,15 +245,32 @@ export default function Dashboard({ me, today, current, months, month, updated, 
 
         {month.logged && (
           <section className="card" aria-label="Recent sign-ups">
-            <div className="card-h"><h2>Recent sign-ups</h2><span className="badge n">{month.entries.length}</span><span className="sp" /><span className="note">{month.entries.filter((e) => ptISO(new Date(e.at)) === today).length} today</span></div>
+            <div className="card-h"><h2>Recent sign-ups</h2><span className="badge n">{month.entries.length}</span><span className="sp" /><span className="note">{month.entries.filter((e) => e.type !== "upsell" && ptISO(new Date(e.at)) === today).length} sign-ups today</span></div>
             {month.entries.length ? (
               <>
                 <ul className="recent">
                   {(showAll ? month.entries : month.entries.slice(0, 8)).map((e) => (
-                    <li key={e.id}>
-                      <span className={`kind-pill ${e.type}`}>{e.type === "sale" ? "Sale" : "Account"}</span>
+                    <li key={e.id} className={upFor === e.id ? "upping" : ""}>
+                      <span className={`kind-pill ${e.type}`}>{e.type === "sale" ? "Sale" : e.type === "upsell" ? "Upsell" : "Account"}</span>
                       <span className="who"><b>{e.client}</b><span>{e.agent} · {e.team}</span></span>
-                      <span className="when">{e.revenue > 0 && <b className="rev">{usd(e.revenue)}</b>}{clock(e.at)}{(e.by === me.email || me.admin) && <button className="b txt rm" onClick={() => confirm(`Remove the ${e.type} for ${e.client} (${e.agent})?`) && remove(e)}>Remove</button>}</span>
+                      <span className="when">
+                        {e.revenue > 0 && <b className={`rev ${e.type === "upsell" ? "up" : ""}`}>{e.type === "upsell" ? "+" : ""}{usd(e.revenue)}</b>}
+                        {clock(e.at)}
+                        <span className="acts">
+                          {me.admin && e.type !== "upsell" && <button className="b txt upb" onClick={() => { setUpFor(upFor === e.id ? null : e.id); setUpAmt(""); setUpErr(""); }}>+ Upsell</button>}
+                          {(e.by === me.email || me.admin) && <button className="b txt rm" onClick={() => confirm(`Remove the ${e.type} for ${e.client} (${e.agent})?`) && remove(e)}>Remove</button>}
+                        </span>
+                      </span>
+                      {upFor === e.id && (
+                        <form className="upform" onSubmit={(ev) => { ev.preventDefault(); addUpsell(e); }}>
+                          <label>Upsell for {e.client}
+                            <span className="money-in"><span>$</span><input autoFocus value={upAmt} onChange={(ev) => setUpAmt(ev.target.value.replace(/[^\d.]/g, ""))} inputMode="decimal" placeholder="0" maxLength={10} aria-label={`Upsell amount for ${e.client}`} /></span>
+                          </label>
+                          <button className="b pri">Add upsell</button>
+                          <button type="button" className="b txt" onClick={() => setUpFor(null)}>Cancel</button>
+                          {upErr && <p className="err">{upErr}</p>}
+                        </form>
+                      )}
                     </li>
                   ))}
                 </ul>

@@ -499,3 +499,36 @@ a.b.pri:hover{filter:brightness(1.08)}
 .recent .when .rev{font-size:13px}
 @media (max-width:1000px){.logfields{grid-template-columns:1fr 1fr}}
 @media (max-width:760px){.logfields{grid-template-columns:1fr}}
+
+/* Settings → month revenue target */
+.revtarget{display:grid;grid-template-columns:minmax(0,1fr) 220px auto;gap:12px;align-items:end;padding:14px;border-radius:12px;border:1px solid color-mix(in srgb,var(--g) 30%,var(--line));background:color-mix(in srgb,var(--g-s) 55%,var(--card))}
+.revtarget>div b{display:block;font-size:14.5px;font-weight:750}
+.revtarget>div span{font-size:13px;color:var(--fg-2);font-weight:550}
+.revtarget label{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:700;color:var(--fg-2)}
+.revtarget .money-in{max-width:none}
+.revtarget .money-in input{border:0;padding:9px 12px 9px 2px;font:inherit;font-size:14.5px;font-weight:700;width:100%;background:transparent;color:var(--fg)}
+.revtarget .b.pri{padding:10px 16px}
+.revtarget .b:disabled{opacity:.55;cursor:default}
+.revtarget .err{grid-column:1/-1;margin:0;font-size:13px;font-weight:650;color:var(--r-t)}
+@media (max-width:760px){.revtarget{grid-template-columns:1fr}}
+
+/* Revenue card + upsells */
+.revkpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.revkpis div{background:var(--soft);border-radius:12px;padding:10px 14px}
+.revkpis span{display:block;font-size:12px;font-weight:650;color:var(--fg-3)}
+.revkpis b{font-size:21px;font-weight:800;letter-spacing:-.02em}
+.revkpis .g b{color:var(--g-t)} .revkpis .y b{color:var(--y-t)}
+.kind-pill.upsell{background:var(--g-s);color:var(--g-t)}
+.rev.up{color:var(--g-t)}
+.recent li{flex-wrap:wrap}
+.recent .acts{display:flex;gap:2px;justify-content:flex-end}
+.b.upb{padding:2px 6px!important;font-size:12px!important;color:var(--u-t)!important}
+.b.upb:hover{background:var(--u-s)!important}
+.recent li.upping{background:var(--soft);border-radius:10px}
+.upform{flex-basis:100%;display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap;padding:4px 0 2px 78px}
+.upform label{display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:700;color:var(--fg-2)}
+.upform .money-in{max-width:160px}
+.upform .money-in input{border:0;padding:7px 10px 7px 2px;font:inherit;font-size:14px;font-weight:700;width:100%;background:transparent;color:var(--fg)}
+.upform .b.pri{padding:8px 14px}
+.upform .err{flex-basis:100%;margin:0;font-size:12.5px;font-weight:650;color:var(--r-t)}
+@media (max-width:560px){.revkpis{grid-template-columns:1fr}.upform{padding-left:0}}
