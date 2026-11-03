@@ -1,0 +1,7 @@
+node_modules
+.next
+.data
+.env*
+.vercel
+.claude
+data/snapshot.json
