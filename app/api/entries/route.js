@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { currentUser } from "@/lib/auth";
-import { loadMonth } from "@/lib/source";
+import { loadMonth, rosteredMonth } from "@/lib/source";
 import { addEntry, isLogMonth } from "@/lib/entries";
 import { ptMonthTitle } from "@/lib/time";
 
 // Log one sign-up for this month: { type: "sale" | "account", team, agent, client }.
-// Anyone signed in may log; the team and agent must be in this month's tab of the sheet.
+// Anyone signed in may log; the team and agent must be on this month's roster (the sheet plus the admin's changes).
 export async function POST(req) {
   const user = await currentUser();
   if (!user) return NextResponse.json({ error: "Sign in first." }, { status: 401 });
@@ -16,8 +16,9 @@ export async function POST(req) {
   if (!client) return NextResponse.json({ error: "Enter the client name." }, { status: 400 });
   const title = ptMonthTitle();
   if (!isLogMonth(title)) return NextResponse.json({ error: "Logging starts in November 2026." }, { status: 400 });
-  const { month } = await loadMonth(title, title);
-  if (!month || month.title !== title) return NextResponse.json({ error: `The sheet has no "${title}" tab yet.` }, { status: 400 });
+  const { tabs } = await loadMonth(title, title);
+  if (!tabs[title]) return NextResponse.json({ error: `The sheet has no "${title}" tab yet.` }, { status: 400 });
+  const month = await rosteredMonth(tabs, title);
   const team = month.teams.find((t) => t.name === b.team);
   const agent = team?.agents.find((a) => a.name === b.agent);
   if (!team || !agent) return NextResponse.json({ error: "Pick a team and an agent from the list." }, { status: 400 });

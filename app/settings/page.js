@@ -1,14 +1,19 @@
 import { redirect } from "next/navigation";
 import { currentUser, isAdmin, googleConfigured } from "@/lib/auth";
 import { driveConnection, readDriveTabs, FILE_ID } from "@/lib/drive";
-import { ptISO } from "@/lib/time";
+import { ptISO, ptMonthTitle } from "@/lib/time";
+import { loadMonth } from "@/lib/source";
+import { parseMonth } from "@/lib/parse";
+import { getRoster, applyRoster } from "@/lib/roster";
+import RosterEditor from "@/components/RosterEditor";
 import Header from "@/components/Header";
 
 export const dynamic = "force-dynamic";
 
 const when = (iso) => new Date(iso).toLocaleString("en-US", { timeZone: "America/Los_Angeles", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" });
 
-// Admin only: connect the "Lahore Sales Target.xlsx" file in Google Drive so the dashboard reads it live.
+// Admin only: connect the "Lahore Sales Target.xlsx" file in Google Drive so the dashboard reads it live,
+// and change each month's teams (add, remove and restore agents).
 export default async function Settings({ searchParams }) {
   const user = await currentUser();
   if (!user) redirect("/login");
@@ -24,6 +29,19 @@ export default async function Settings({ searchParams }) {
     sp.drive === "connected" ? { ok: true, t: "Google Drive is connected. The dashboard now reads the sales file live." } :
     sp.drive === "disconnected" ? { ok: true, t: "Google Drive is disconnected. The dashboard shows the saved copy from Nov 3." } :
     sp.drive === "failed" ? { ok: false, t: `Connecting didn't finish${sp.reason ? `: ${sp.reason}` : "."}` } : null;
+
+  // Teams & agents: this month by default, or the month picked there (?rm=).
+  const { tabs, months } = await loadMonth(null, ptMonthTitle());
+  const rm = months.includes(sp.rm) ? sp.rm : months.includes(ptMonthTitle()) ? ptMonthTitle() : months[0];
+  let roster = null;
+  if (rm) {
+    const r = await getRoster(rm);
+    const view = applyRoster(parseMonth(rm, tabs[rm]), r);
+    roster = {
+      teams: view.teams.map((t) => ({ name: t.name, leader: t.leader, agents: t.agents.map((a) => ({ name: a.name, target: a.target, added: !!a.added })) })),
+      removed: r.removed,
+    };
+  }
 
   return (
     <div className="wrap">
@@ -53,6 +71,9 @@ export default async function Settings({ searchParams }) {
           <p className="note">Google will ask to let Sales Target see your Drive files. It only ever opens this one file, and it never changes anything.</p>
         </div>
       </section>
+      {roster
+        ? <RosterEditor months={months} month={rm} teams={roster.teams} removed={roster.removed} />
+        : <section className="card"><div className="card-h"><h2>Teams &amp; agents</h2></div><div className="setbody"><p className="muted">Connect Google Drive first. The teams for each month come from the sheet's month tabs.</p></div></section>}
     </div>
   );
 }
