@@ -6,7 +6,7 @@ import { getRoster, saveRoster, same } from "@/lib/roster";
 
 // Admin: change one month's teams. { month, action: "add" | "remove" | "restore" | "target", team, agent, target? }
 // "add" puts a new agent in a team, "remove" takes any agent out of a team, "restore" brings a removed sheet agent back,
-// "target" sets an agent's target (empty puts a sheet agent back on the sheet's target).
+// "target" sets an agent's target (the sheet's own number puts a sheet agent back on it). A target is required.
 export async function POST(req) {
   const user = await currentUser();
   if (!isAdmin(user)) return NextResponse.json({ error: "Only admins can change teams." }, { status: 403 });
@@ -24,7 +24,9 @@ export async function POST(req) {
   const isAdded = r.added.some((x) => same(x.team, team.name) && same(x.agent, agent));
   const isRemoved = r.removed.some((x) => same(x.team, team.name) && same(x.agent, agent));
 
+  const needsTarget = b.action === "add" || b.action === "target";
   const t = b.target === "" || b.target == null ? null : Number(b.target);
+  if (needsTarget && t == null) return NextResponse.json({ error: "Enter the target." }, { status: 400 });
   if (t != null && !(Number.isInteger(t) && t >= 0 && t <= 1000)) return NextResponse.json({ error: "Target must be a whole number." }, { status: 400 });
 
   if (b.action === "add") {

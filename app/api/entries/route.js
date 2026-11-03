@@ -4,7 +4,7 @@ import { loadMonth, rosteredMonth } from "@/lib/source";
 import { addEntry, isLogMonth } from "@/lib/entries";
 import { ptMonthTitle } from "@/lib/time";
 
-// Log one sign-up for this month: { type: "sale" | "account", team, agent, client, revenue? } (revenue in dollars, optional).
+// Log one sign-up for this month: { type: "sale" | "account", team, agent, client, revenue } (revenue in dollars). All required.
 // Anyone signed in may log; the team and agent must be on this month's roster (the sheet plus the admin's changes).
 export async function POST(req) {
   const user = await currentUser();
@@ -15,8 +15,9 @@ export async function POST(req) {
   if (!type) return NextResponse.json({ error: "Choose Sale or Account." }, { status: 400 });
   if (!client) return NextResponse.json({ error: "Enter the client name." }, { status: 400 });
   const raw = String(b.revenue ?? "").replace(/[$,\s]/g, "");
-  const revenue = raw === "" ? null : Math.round(Number(raw) * 100) / 100;
-  if (revenue != null && !(Number.isFinite(revenue) && revenue >= 0 && revenue <= 1e6)) return NextResponse.json({ error: "Revenue must be a dollar amount, like 350 or 1250.50." }, { status: 400 });
+  if (raw === "") return NextResponse.json({ error: "Enter the revenue." }, { status: 400 });
+  const revenue = Math.round(Number(raw) * 100) / 100;
+  if (!(Number.isFinite(revenue) && revenue >= 0 && revenue <= 1e6)) return NextResponse.json({ error: "Revenue must be a dollar amount, like 350 or 1250.50." }, { status: 400 });
   const title = ptMonthTitle();
   if (!isLogMonth(title)) return NextResponse.json({ error: "Logging starts in November 2026." }, { status: 400 });
   const { tabs } = await loadMonth(title, title);

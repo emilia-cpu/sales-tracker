@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Avatar } from "@/components/Header";
 
-// An agent's target: type a number and Save. Empty puts a sheet agent back on the sheet's target.
+// An agent's target: type a number and Save. Typing the sheet's own number puts a sheet agent back on it.
 function TargetBox({ a, busy, onSave }) {
   const shown = a.target == null ? "" : String(a.target);
   const [v, setV] = useState(shown);
@@ -16,7 +16,7 @@ function TargetBox({ a, busy, onSave }) {
         <span className="sr">Target for {a.name}</span>
         <input value={v} onChange={(e) => setV(e.target.value.replace(/\D/g, ""))} inputMode="numeric" maxLength={4} placeholder="—" aria-label={`Target for ${a.name}`} />
       </label>
-      {dirty && <button className="b pri" disabled={busy}>Save</button>}
+      {dirty && v !== "" && <button className="b pri" disabled={busy}>Save</button>}
     </form>
   );
 }
@@ -36,7 +36,7 @@ export default function RosterEditor({ months, month, teams, removed }) {
       const res = await fetch("/api/roster", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ month, action, team: t, agent: a, ...extra }) });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j.error || "Couldn't save. Try again.");
-      setMsg({ ok: true, t: action === "add" ? `Added ${a} to ${t} for ${month}.` : action === "remove" ? `Removed ${a} from ${t} for ${month}.` : action === "target" ? `${a}'s target for ${month} is now ${extra.target === "" ? "the sheet's" : extra.target}.` : `${a} is back in ${t}.` });
+      setMsg({ ok: true, t: action === "add" ? `Added ${a} to ${t} for ${month}.` : action === "remove" ? `Removed ${a} from ${t} for ${month}.` : action === "target" ? `${a}'s target for ${month} is now ${extra.target}.` : `${a} is back in ${t}.` });
       if (action === "add") { setAgent(""); setTarget(""); setOpen(t); }
       router.refresh();
       return true;
@@ -52,6 +52,7 @@ export default function RosterEditor({ months, month, teams, removed }) {
     e.preventDefault();
     if (!team) return setMsg({ ok: false, t: "Choose a team." });
     if (!agent.trim()) return setMsg({ ok: false, t: "Enter the agent's name." });
+    if (target === "") return setMsg({ ok: false, t: "Enter the agent's target." });
     change("add", team, agent.trim(), { target });
   }
 
@@ -80,7 +81,7 @@ export default function RosterEditor({ months, month, teams, removed }) {
           <label>Agent name
             <input value={agent} onChange={(e) => setAgent(e.target.value)} placeholder="Full name" maxLength={60} autoComplete="off" />
           </label>
-          <label className="tgt"><span>Target <small>(optional)</small></span>
+          <label className="tgt">Target
             <input value={target} onChange={(e) => setTarget(e.target.value.replace(/\D/g, ""))} inputMode="numeric" placeholder="Sign-ups" maxLength={4} />
           </label>
           <button className="b pri" disabled={!!busy}>{busy.startsWith("add") ? "Adding…" : "Add agent"}</button>
