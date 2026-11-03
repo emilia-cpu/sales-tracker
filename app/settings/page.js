@@ -6,6 +6,8 @@ import { loadMonth } from "@/lib/source";
 import { parseMonth } from "@/lib/parse";
 import { getRoster, applyRoster } from "@/lib/roster";
 import RosterEditor from "@/components/RosterEditor";
+import TeamAccess from "@/components/TeamAccess";
+import { listPeople, fixedAdmins } from "@/lib/people";
 import Header from "@/components/Header";
 
 export const dynamic = "force-dynamic";
@@ -13,7 +15,7 @@ export const dynamic = "force-dynamic";
 const when = (iso) => new Date(iso).toLocaleString("en-US", { timeZone: "America/Los_Angeles", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" });
 
 // Admin only: connect the "Lahore Sales Target.xlsx" file in Google Drive so the dashboard reads it live,
-// and change each month's teams (add, remove and restore agents).
+// change each month's teams (add, remove and restore agents), and decide who can sign in (Team access).
 export default async function Settings({ searchParams }) {
   const user = await currentUser();
   if (!user) redirect("/login");
@@ -74,6 +76,7 @@ export default async function Settings({ searchParams }) {
       {roster
         ? <RosterEditor months={months} month={rm} teams={roster.teams} removed={roster.removed} />
         : <section className="card"><div className="card-h"><h2>Teams &amp; agents</h2></div><div className="setbody"><p className="muted">Connect Google Drive first. The teams for each month come from the sheet's month tabs.</p></div></section>}
+      <TeamAccess me={user.email} people={await listPeople()} fixed={fixedAdmins()} />
     </div>
   );
 }

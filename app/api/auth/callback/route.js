@@ -25,7 +25,7 @@ export async function GET(req) {
   try {
     session = await finishLogin(url.origin, url.searchParams.get("code"));
   } catch (e) {
-    const res = NextResponse.redirect(`${url.origin}/login?error=${e.code === "domain" ? "domain" : `failed&reason=${encodeURIComponent(e.message)}`}`);
+    const res = NextResponse.redirect(`${url.origin}/login?error=${e.code === "invite" ? `invite&email=${encodeURIComponent(e.email)}` : `failed&reason=${encodeURIComponent(e.message)}`}`);
     res.cookies.delete("st_state");
     return res;
   }

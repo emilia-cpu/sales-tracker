@@ -21,7 +21,7 @@ const G = (
   </svg>
 );
 
-export default function LoginScreen({ notice, noticeOk, domain, skipSplash }) {
+export default function LoginScreen({ notice, noticeOk, skipSplash }) {
   // Splash shows once per browser session, and never when there's a message to read.
   const [stage, setStage] = useState(skipSplash ? "card" : "splash");
   useEffect(() => {
@@ -49,8 +49,8 @@ export default function LoginScreen({ notice, noticeOk, domain, skipSplash }) {
           <p className="lsub">Sign-ups against target for the Lahore sales floor.</p>
           {notice && <div className={`lnotice ${noticeOk ? "ok" : ""}`} role="status">{notice}</div>}
           <a className="lbtn" href="/api/auth/login"><span className="lg">{G}</span>Continue with Google</a>
-          <p className="lhint">Use your @{domain} work email</p>
-          <p className="lfoot">MyAIO accounts only</p>
+          <p className="lhint">Use the email an admin added for you</p>
+          <p className="lfoot">Invited people only</p>
         </div></div>
       )}
     </div>

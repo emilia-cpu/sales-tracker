@@ -13,6 +13,8 @@ Without Redis, data is kept in `.data/sales-target.json`. Without a Drive connec
 
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`: Google OAuth client (sign-in and the Drive connection). Redirect URI: `https://<domain>/api/auth/callback`. The Google Drive API must be enabled.
 - `REDIS_URL` (or any `REDIS…URL`): stores logged sign-ups and the Drive connection, under `st:` keys.
-- Optional: `SESSION_SECRET`, `ADMIN_EMAILS` (comma-separated, besides emilia@myaio.com), `SALES_FILE_ID`, `ALLOWED_DOMAIN`.
+- Optional: `SESSION_SECRET`, `ADMIN_EMAILS` (comma-separated, always admins besides emilia@myaio.com), `SALES_FILE_ID`.
+
+Only people added in Settings → Team access can sign in (as User or Admin).
 
 After deploying, an admin opens Settings → Connect Google Drive.

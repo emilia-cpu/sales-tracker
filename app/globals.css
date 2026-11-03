@@ -463,3 +463,17 @@ a.b.pri:hover{filter:brightness(1.08)}
 .card-h .sel.month select{font-size:13.5px;padding:6px 34px 6px 12px}
 @media (max-width:760px){.rosteradd{grid-template-columns:1fr}}
 .rosteradd label.tgt{white-space:nowrap}
+
+/* Settings → Team access */
+.accessadd{display:grid;grid-template-columns:1.6fr 160px auto;gap:12px;align-items:end;padding:14px;border-radius:12px;background:var(--soft);border:1px solid var(--line)}
+.accessadd label{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:700;color:var(--fg-2);min-width:0}
+.accessadd input{font:inherit;font-size:14.5px;padding:9px 12px;border-radius:10px;border:1px solid var(--line-2);background:var(--card);color:var(--fg);width:100%}
+.accessadd .sel{display:block}
+.accessadd .sel select{width:100%;font-size:14.5px;font-weight:650;padding:9px 36px 9px 12px;background:var(--card)}
+.accessadd .b.pri{padding:10px 16px}
+.people{border:1px solid var(--line);border-radius:12px}
+.people li:first-child{border-top:0}
+.sel.small select{font-size:13px;font-weight:650;padding:5px 30px 5px 10px}
+.sel.small::after{right:11px}
+.sel.small select:disabled{opacity:.6;cursor:not-allowed}
+@media (max-width:760px){.accessadd{grid-template-columns:1fr}.people li{flex-wrap:wrap}}
