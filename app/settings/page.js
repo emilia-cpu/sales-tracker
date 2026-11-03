@@ -40,7 +40,7 @@ export default async function Settings({ searchParams }) {
     const r = await getRoster(rm);
     const view = applyRoster(parseMonth(rm, tabs[rm]), r);
     roster = {
-      teams: view.teams.map((t) => ({ name: t.name, leader: t.leader, agents: t.agents.map((a) => ({ name: a.name, target: a.target, added: !!a.added })) })),
+      teams: view.teams.map((t) => ({ name: t.name, leader: t.leader, agents: t.agents.map((a) => ({ name: a.name, target: a.target, added: !!a.added, targetSet: !!a.targetSet, sheetTarget: a.sheetTarget ?? null })) })),
       removed: r.removed,
     };
   }

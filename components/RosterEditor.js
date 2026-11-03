@@ -1,9 +1,25 @@
 "use client";
-// Settings → Teams & agents: the admin adds agents to a team, removes any agent, and restores removed ones,
-// month by month. The sheet isn't changed; the dashboard and the "Log a sign-up" form follow these changes.
+// Settings → Teams & agents: the admin adds agents to a team, removes any agent, restores removed ones, and sets
+// each agent's target, month by month. The sheet isn't changed; the dashboard and the "Log a sign-up" form follow these changes.
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Avatar } from "@/components/Header";
+
+// An agent's target: type a number and Save. Empty puts a sheet agent back on the sheet's target.
+function TargetBox({ a, busy, onSave }) {
+  const shown = a.target == null ? "" : String(a.target);
+  const [v, setV] = useState(shown);
+  const dirty = v !== shown;
+  return (
+    <form className="tbox" onSubmit={(e) => { e.preventDefault(); if (dirty) onSave(v); }}>
+      <label>
+        <span className="sr">Target for {a.name}</span>
+        <input value={v} onChange={(e) => setV(e.target.value.replace(/\D/g, ""))} inputMode="numeric" maxLength={4} placeholder="—" aria-label={`Target for ${a.name}`} />
+      </label>
+      {dirty && <button className="b pri" disabled={busy}>Save</button>}
+    </form>
+  );
+}
 
 export default function RosterEditor({ months, month, teams, removed }) {
   const router = useRouter();
@@ -20,7 +36,7 @@ export default function RosterEditor({ months, month, teams, removed }) {
       const res = await fetch("/api/roster", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ month, action, team: t, agent: a, ...extra }) });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j.error || "Couldn't save. Try again.");
-      setMsg({ ok: true, t: action === "add" ? `Added ${a} to ${t} for ${month}.` : action === "remove" ? `Removed ${a} from ${t} for ${month}.` : `${a} is back in ${t}.` });
+      setMsg({ ok: true, t: action === "add" ? `Added ${a} to ${t} for ${month}.` : action === "remove" ? `Removed ${a} from ${t} for ${month}.` : action === "target" ? `${a}'s target for ${month} is now ${extra.target === "" ? "the sheet's" : extra.target}.` : `${a} is back in ${t}.` });
       if (action === "add") { setAgent(""); setTarget(""); setOpen(t); }
       router.refresh();
       return true;
@@ -52,7 +68,7 @@ export default function RosterEditor({ months, month, teams, removed }) {
         </label>
       </div>
       <div className="setbody" id="teams">
-        <p className="muted">Add an agent to any team, or take one out, for <b>{month}</b>. Changes apply to this month only and show on the dashboard and in "Log a sign-up" right away. The sheet itself isn't changed.</p>
+        <p className="muted">Add an agent to any team, take one out, or change an agent's target, for <b>{month}</b>. Changes apply to this month only and show on the dashboard and in "Log a sign-up" right away. The sheet itself isn't changed.</p>
 
         <form className="rosteradd" onSubmit={add}>
           <label>Team
@@ -76,14 +92,15 @@ export default function RosterEditor({ months, month, teams, removed }) {
             <li key={t.name}>
               <button type="button" className="rteam" aria-expanded={open === t.name} onClick={() => setOpen(open === t.name ? null : t.name)}>
                 <Avatar name={t.leader} i={i} />
-                <span className="who"><b>{t.name}</b><span>{t.agents.length} agents{t.agents.some((a) => a.added) && ` · ${t.agents.filter((a) => a.added).length} added here`}</span></span>
+                <span className="who"><b>{t.name}</b><span>{t.agents.length} agents · target {t.agents.reduce((n, a) => n + (a.target || 0), 0)}{t.agents.some((a) => a.added) && ` · ${t.agents.filter((a) => a.added).length} added here`}</span></span>
                 <span className="chev" aria-hidden="true" />
               </button>
               {open === t.name && (
                 <ul className="ragents">
                   {t.agents.map((a) => (
                     <li key={a.name}>
-                      <span className="who"><b>{a.name}</b><span>Target {a.target ?? "—"}{a.added && <em className="tagpill">Added here</em>}</span></span>
+                      <span className="who"><b>{a.name}</b><span>{a.added ? <em className="tagpill">Added here</em> : a.targetSet ? `Sheet target ${a.sheetTarget ?? "—"} · changed here` : "Target from the sheet"}</span></span>
+                      <TargetBox key={`${a.name}:${a.target}`} a={a} busy={!!busy} onSave={(v) => change("target", t.name, a.name, { target: v })} />
                       <button className="b no" disabled={!!busy} onClick={() => confirm(`Remove ${a.name} from ${t.name} for ${month}?`) && change("remove", t.name, a.name)}>
                         {busy === "remove" + t.name + a.name ? "Removing…" : "Remove"}
                       </button>
