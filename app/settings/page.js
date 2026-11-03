@@ -49,11 +49,14 @@ export default async function Settings({ searchParams }) {
     <div className="wrap">
       <Header me={{ ...user, admin: true }} today={ptISO()} active="settings" />
       {notice && <div className={`notice ${notice.ok ? "ok" : ""}`} role="status">{notice.t}</div>}
-      <section className="card">
-        <div className="card-h">
+      {/* Folded away once it's working; opens by itself when it isn't connected or has a problem. */}
+      <details className="card fold" open={!conn || !!error || !!sp.drive}>
+        <summary className="card-h">
           <h2>Sales file</h2>
           <span className={`badge ${conn && !error ? "g" : conn ? "r" : "n"}`}>{conn ? (error ? "Problem" : "Live") : "Not connected"}</span>
-        </div>
+          <span className="sp" />
+          <span className="note fold-hint">Details</span>
+        </summary>
         <div className="setbody">
           <p className="muted">
             The dashboard reads <b>{file?.name || "Lahore Sales Target.xlsx"}</b> straight from Google Drive and picks up edits within about 30 seconds.
@@ -72,7 +75,7 @@ export default async function Settings({ searchParams }) {
           </div>
           <p className="note">Google will ask to let Sales Target see your Drive files. It only ever opens this one file, and it never changes anything.</p>
         </div>
-      </section>
+      </details>
       {roster
         ? <RosterEditor months={months} month={rm} teams={roster.teams} removed={roster.removed} />
         : <section className="card"><div className="card-h"><h2>Teams &amp; agents</h2></div><div className="setbody"><p className="muted">Connect Google Drive first. The teams for each month come from the sheet's month tabs.</p></div></section>}

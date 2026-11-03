@@ -482,3 +482,10 @@ a.b.pri:hover{filter:brightness(1.08)}
 .tbox input:focus{border-color:var(--blue)}
 .tbox .b.pri{padding:5px 10px;font-size:12.5px}
 .ragents li .tbox::before{content:"Target";font-size:11.5px;font-weight:700;color:var(--fg-3);margin-right:2px}
+/* folded Settings section (Sales file) */
+.fold summary{cursor:pointer;list-style:none}
+.fold summary::-webkit-details-marker{display:none}
+.fold:not([open]) summary{border-bottom:0}
+.fold summary::after{content:"";width:8px;height:8px;border-right:2px solid var(--fg-3);border-bottom:2px solid var(--fg-3);transform:rotate(45deg);margin:0 4px 4px 0;transition:transform .15s}
+.fold[open] summary::after{transform:rotate(225deg);margin:4px 4px 0 0}
+.fold[open] .fold-hint{display:none}
