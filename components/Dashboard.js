@@ -8,7 +8,8 @@ import LogSignup from "@/components/LogSignup";
 import { ptISO } from "@/lib/time";
 
 const fmt = (n) => (n == null ? "—" : Number(n).toLocaleString("en-US", { maximumFractionDigits: 2 }));
-const usd = (n) => "$" + Number(n).toLocaleString("en-US", { maximumFractionDigits: 0 });
+// Whole dollars as "$1,250", cents as "$1,250.50".
+const usd = (n) => { const d = Number.isInteger(Number(n)) ? 0 : 2; return "$" + Number(n).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d }); };
 const pct = (a, t) => (t > 0 ? Math.round((a / t) * 100) : null);
 const width = (a, t) => (t > 0 ? Math.min(100, (a / t) * 100) : 0);
 // Accounts/sales split, or null when the sheet only has placeholder zeros.
@@ -140,6 +141,7 @@ export default function Dashboard({ me, today, current, months, month, updated, 
         <div className="split">
           {split && <span><i style={{ background: "var(--blue)" }} />Accounts <strong className="num">{split.accounts}</strong></span>}
           {split && <span><i style={{ background: "var(--u)" }} />Sales <strong className="num">{split.sales}</strong></span>}
+          {month.totals.revenue > 0 && <span><i style={{ background: "var(--g)" }} />Revenue <strong className="num">{usd(month.totals.revenue)}</strong></span>}
           {pc && <span><i className="pacekey" />Expected by today <strong className="num">{pc.expected}</strong>{floor.achieved >= pc.expected ? <em className="ahead">on pace</em> : <em className="behind">{pc.expected - floor.achieved} behind</em>}</span>}
         </div>
       </section>
@@ -156,7 +158,7 @@ export default function Dashboard({ me, today, current, months, month, updated, 
                   <div className="wk-v num"><strong>{fmt(w.achieved)}</strong><span>/ {fmt(w.target)}</span></div>
                   <div className="bar"><i style={{ width: `${width(w.achieved, w.target)}%`, background: p >= 100 ? "var(--g)" : undefined }} /></div>
                   <div className="wk-s">{w.target ? (left > 0 ? `${fmt(left)} to go` : left === 0 ? "Target hit" : `${fmt(-left)} over`) : "No target"}{s && <> · {s.accounts} acc / {s.sales} sales</>}</div>
-                  {(w.mrr || w.upsell) ? <div className="wk-r num">{w.mrr ? <span>MRR <b>{usd(w.mrr)}</b></span> : null}{w.upsell ? <span>Upsell <b>{usd(w.upsell)}</b></span> : null}</div> : null}
+                  {(w.mrr || w.upsell || w.revenue) ? <div className="wk-r num">{w.revenue ? <span>Revenue <b>{usd(w.revenue)}</b></span> : null}{w.mrr ? <span>MRR <b>{usd(w.mrr)}</b></span> : null}{w.upsell ? <span>Upsell <b>{usd(w.upsell)}</b></span> : null}</div> : null}
                 </div>
               );
             })}
@@ -176,7 +178,7 @@ export default function Dashboard({ me, today, current, months, month, updated, 
                   <Avatar name={t.leader} i={t.i} />
                   <span className="who">
                     <b>{t.name}</b>
-                    <span className="num">{fmt(t.signups)} of {fmt(t.target)} · {t.agents.length} agents{s && ` · ${s.accounts} acc / ${s.sales} sales`}</span>
+                    <span className="num">{fmt(t.signups)} of {fmt(t.target)} · {t.agents.length} agents{s && ` · ${s.accounts} acc / ${s.sales} sales`}{t.revenue > 0 && ` · ${usd(t.revenue)}`}</span>
                     <span className="bar"><i style={{ width: `${width(t.signups, t.target)}%`, background: t.p >= 100 ? "var(--g)" : "var(--blue)" }} /></span>
                   </span>
                   <span className={`pc num ${t.p >= 100 ? "done" : ""}`}>{t.p == null ? "—" : `${t.p}%`}</span>
@@ -213,7 +215,7 @@ export default function Dashboard({ me, today, current, months, month, updated, 
                     <li key={e.id}>
                       <span className={`kind-pill ${e.type}`}>{e.type === "sale" ? "Sale" : "Account"}</span>
                       <span className="who"><b>{e.client}</b><span>{e.agent} · {e.team}</span></span>
-                      <span className="when">{clock(e.at)}{(e.by === me.email || me.admin) && <button className="b txt rm" onClick={() => confirm(`Remove the ${e.type} for ${e.client} (${e.agent})?`) && remove(e)}>Remove</button>}</span>
+                      <span className="when">{e.revenue > 0 && <b className="rev">{usd(e.revenue)}</b>}{clock(e.at)}{(e.by === me.email || me.admin) && <button className="b txt rm" onClick={() => confirm(`Remove the ${e.type} for ${e.client} (${e.agent})?`) && remove(e)}>Remove</button>}</span>
                     </li>
                   ))}
                 </ul>
@@ -263,7 +265,7 @@ export default function Dashboard({ me, today, current, months, month, updated, 
                   <span className="cn"><Avatar name={a.name} i={a.ti} /><span><b>{a.name}</b><span>{a.team}</span></span></span>
                   <span className="num c-t"><small>Target</small>{fmt(a.target)}</span>
                   <span className="num c-s"><small>Sign-ups</small><b>{fmt(a.signups)}</b></span>
-                  <span className="num c-as"><small>Acc / Sales</small>{s ? `${s.accounts} / ${s.sales}` : "—"}</span>
+                  <span className="num c-as"><small>Acc / Sales</small>{s ? `${s.accounts} / ${s.sales}` : "—"}{a.revenue > 0 && <em className="rev">{usd(a.revenue)}</em>}</span>
                   <span className="c-p"><span className="bar"><i style={{ width: `${width(a.signups, a.target)}%`, background: p >= 100 ? "var(--g)" : "var(--blue)" }} /></span><span className="num">{p == null ? "—" : `${p}%`}</span></span>
                   <span className="c-st"><span className={`st ${st.k}`}><i>{st.i}</i>{st.t}</span></span>
                 </li>

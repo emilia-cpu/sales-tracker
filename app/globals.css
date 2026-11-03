@@ -489,3 +489,13 @@ a.b.pri:hover{filter:brightness(1.08)}
 .fold summary::after{content:"";width:8px;height:8px;border-right:2px solid var(--fg-3);border-bottom:2px solid var(--fg-3);transform:rotate(45deg);margin:0 4px 4px 0;transition:transform .15s}
 .fold[open] summary::after{transform:rotate(225deg);margin:4px 4px 0 0}
 .fold[open] .fold-hint{display:none}
+
+/* revenue on logged sign-ups */
+.logfields{grid-template-columns:1fr 1fr 1.3fr 150px}
+.logfields label small{font-weight:550;color:var(--fg-3)}
+.logfields .money-in{max-width:none;background:var(--soft);border-color:var(--line);border-radius:10px}
+.logfields .money-in input{border:0;background:transparent;padding-left:2px}
+.rev{display:block;font-style:normal;font-size:12px;font-weight:750;color:var(--g-t)}
+.recent .when .rev{font-size:13px}
+@media (max-width:1000px){.logfields{grid-template-columns:1fr 1fr}}
+@media (max-width:760px){.logfields{grid-template-columns:1fr}}

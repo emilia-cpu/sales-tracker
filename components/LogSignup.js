@@ -1,5 +1,5 @@
 "use client";
-// "Log a sign-up": Account or Sale, then team, then one of that team's agents, then the client's name.
+// "Log a sign-up": Account or Sale, then team, then one of that team's agents, the client's name and the revenue (optional).
 // The browser remembers the last team and agent picked, since people mostly log for themselves.
 import { useEffect, useState } from "react";
 
@@ -11,6 +11,7 @@ export default function LogSignup({ roster, onLogged }) {
   const [team, setTeam] = useState("");
   const [agent, setAgent] = useState("");
   const [client, setClient] = useState("");
+  const [revenue, setRevenue] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
 
@@ -24,7 +25,7 @@ export default function LogSignup({ roster, onLogged }) {
   }, [open, roster]);
 
   const agents = roster.find((t) => t.name === team)?.agents || [];
-  const reset = () => { setType(""); setClient(""); setErr(""); };
+  const reset = () => { setType(""); setClient(""); setRevenue(""); setErr(""); };
 
   async function save(e) {
     e.preventDefault();
@@ -33,7 +34,7 @@ export default function LogSignup({ roster, onLogged }) {
     if (!client.trim()) return setErr("Enter the client name.");
     setBusy(true); setErr("");
     try {
-      const res = await fetch("/api/entries", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type, team, agent, client }) });
+      const res = await fetch("/api/entries", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type, team, agent, client, revenue }) });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j.error || "Couldn't save. Try again.");
       try { localStorage.setItem(MEMO, JSON.stringify({ team, agent })); } catch {}
@@ -81,11 +82,14 @@ export default function LogSignup({ roster, onLogged }) {
           <label className="wide">Client name
             <input value={client} onChange={(e) => setClient(e.target.value)} placeholder="Business or client name" maxLength={120} autoComplete="off" />
           </label>
+          <label><span>Revenue <small>(optional)</small></span>
+            <span className="money-in"><span>$</span><input value={revenue} onChange={(e) => setRevenue(e.target.value.replace(/[^\d.]/g, ""))} inputMode="decimal" placeholder="0" maxLength={10} autoComplete="off" /></span>
+          </label>
         </div>
         {err && <p className="err" role="alert">{err}</p>}
         <div className="logacts">
           <button className="b pri" disabled={busy}>{busy ? "Saving…" : type === "sale" ? "Log sale" : type === "account" ? "Log account" : "Log sign-up"}</button>
-          {agent && type && <span className="note">Adds 1 {type} for {agent} ({team}).</span>}
+          {agent && type && <span className="note">Adds 1 {type}{revenue && Number(revenue) > 0 ? ` worth $${Number(revenue).toLocaleString("en-US")}` : ""} for {agent} ({team}).</span>}
         </div>
       </div>
     </form>

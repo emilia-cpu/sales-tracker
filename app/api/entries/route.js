@@ -4,7 +4,7 @@ import { loadMonth, rosteredMonth } from "@/lib/source";
 import { addEntry, isLogMonth } from "@/lib/entries";
 import { ptMonthTitle } from "@/lib/time";
 
-// Log one sign-up for this month: { type: "sale" | "account", team, agent, client }.
+// Log one sign-up for this month: { type: "sale" | "account", team, agent, client, revenue? } (revenue in dollars, optional).
 // Anyone signed in may log; the team and agent must be on this month's roster (the sheet plus the admin's changes).
 export async function POST(req) {
   const user = await currentUser();
@@ -14,6 +14,9 @@ export async function POST(req) {
   const client = String(b.client || "").trim().slice(0, 120);
   if (!type) return NextResponse.json({ error: "Choose Sale or Account." }, { status: 400 });
   if (!client) return NextResponse.json({ error: "Enter the client name." }, { status: 400 });
+  const raw = String(b.revenue ?? "").replace(/[$,\s]/g, "");
+  const revenue = raw === "" ? null : Math.round(Number(raw) * 100) / 100;
+  if (revenue != null && !(Number.isFinite(revenue) && revenue >= 0 && revenue <= 1e6)) return NextResponse.json({ error: "Revenue must be a dollar amount, like 350 or 1250.50." }, { status: 400 });
   const title = ptMonthTitle();
   if (!isLogMonth(title)) return NextResponse.json({ error: "Logging starts in November 2026." }, { status: 400 });
   const { tabs } = await loadMonth(title, title);
@@ -22,6 +25,6 @@ export async function POST(req) {
   const team = month.teams.find((t) => t.name === b.team);
   const agent = team?.agents.find((a) => a.name === b.agent);
   if (!team || !agent) return NextResponse.json({ error: "Pick a team and an agent from the list." }, { status: 400 });
-  const entry = await addEntry(title, { type, team: team.name, agent: agent.name, client, by: user.email });
+  const entry = await addEntry(title, { type, team: team.name, agent: agent.name, client, revenue, by: user.email });
   return NextResponse.json({ entry });
 }

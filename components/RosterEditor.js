@@ -80,7 +80,7 @@ export default function RosterEditor({ months, month, teams, removed }) {
           <label>Agent name
             <input value={agent} onChange={(e) => setAgent(e.target.value)} placeholder="Full name" maxLength={60} autoComplete="off" />
           </label>
-          <label className="tgt">Target <small>(optional)</small>
+          <label className="tgt"><span>Target <small>(optional)</small></span>
             <input value={target} onChange={(e) => setTarget(e.target.value.replace(/\D/g, ""))} inputMode="numeric" placeholder="Sign-ups" maxLength={4} />
           </label>
           <button className="b pri" disabled={!!busy}>{busy.startsWith("add") ? "Adding…" : "Add agent"}</button>
