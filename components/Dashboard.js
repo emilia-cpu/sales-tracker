@@ -339,7 +339,7 @@ export default function Dashboard({ me, today, current, months, month, updated, 
       )}
 
       <p className="foot">
-        {month.logged && "Sign-ups are counted from what's logged here; teams, agents and targets come from the sheet. "}{source === "live" ? "Live from" : "Saved copy of"} "Lahore Sales Target" · last edited {new Date(updated).toLocaleString("en-US", { timeZone: "America/Los_Angeles", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" })}
+        {month.logged && "Numbers come from the sheet plus sign-ups logged here, which are added to the sheet within seconds. "}{source === "live" ? "Live from" : "Saved copy of"} "Lahore Sales Target" · last edited {new Date(updated).toLocaleString("en-US", { timeZone: "America/Los_Angeles", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" })}
         {error && <><br /><span className="warn">Couldn't read the sheet just now: {error}</span></>}
         {source !== "live" && me.admin && <><br /><a href="/settings">Connect Google Drive</a> to show live numbers.</>}
       </p>
