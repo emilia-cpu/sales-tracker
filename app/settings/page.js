@@ -6,6 +6,8 @@ import { loadMonth } from "@/lib/source";
 import { parseMonth } from "@/lib/parse";
 import { getRoster, applyRoster } from "@/lib/roster";
 import RosterEditor from "@/components/RosterEditor";
+import SheetCompare from "@/components/SheetCompare";
+import { isLogMonth } from "@/lib/entries";
 import TeamAccess from "@/components/TeamAccess";
 import { listPeople, fixedAdmins } from "@/lib/people";
 import { lastSync } from "@/lib/sheetsync";
@@ -92,6 +94,8 @@ export default async function Settings({ searchParams }) {
           <p className="note">Google will ask to let Sales Target see and edit your Drive files. It only ever opens this one file, and only writes this month's sign-ups, accounts/sales, revenue and changed targets into the cells for them, never formulas. Every change is kept in the file's Version history.</p>
         </div>
       </details>
+      {/* Right under the sheet connection: check the sheet against the dashboard. */}
+      {conn && months.some(isLogMonth) && <SheetCompare months={months.filter(isLogMonth)} current={ptMonthTitle()} canWrite={!readOnly} />}
     </div>
   );
 }

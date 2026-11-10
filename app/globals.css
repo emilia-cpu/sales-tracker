@@ -532,3 +532,16 @@ a.b.pri:hover{filter:brightness(1.08)}
 .upform .b.pri{padding:8px 14px}
 .upform .err{flex-basis:100%;margin:0;font-size:12.5px;font-weight:650;color:var(--r-t)}
 @media (max-width:560px){.revkpis{grid-template-columns:1fr}.upform{padding-left:0}}
+
+/* Settings → Compare with sheet */
+.cmp{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.cmp-h,.cmp-r{display:grid;grid-template-columns:minmax(0,1fr) 120px 120px 60px;gap:12px;align-items:center;padding:8px 14px}
+.cmp-h{background:var(--soft);font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--fg-3);border-bottom:1px solid var(--line)}
+.cmp-g+.cmp-g{border-top:1px solid var(--line)}
+.cmp-w{display:block;padding:10px 14px 2px;font-size:13px;font-weight:750}
+.cmp-r{font-size:13.5px}
+.cmp-r small{display:none}
+.cmp-s{color:var(--r-t);font-weight:700}
+.cmp-d{color:var(--g-t);font-weight:700}
+.cmp-c{font-size:12px;color:var(--fg-3);font-family:ui-monospace,Menlo,monospace}
+@media (max-width:640px){.cmp-h{display:none}.cmp-r{grid-template-columns:1fr 1fr;row-gap:2px}.cmp-r>span:first-child{grid-column:1/-1;font-weight:650}.cmp-r small{display:block;font-size:11px;color:var(--fg-3);font-weight:650}.cmp-c{display:none}}
