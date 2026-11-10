@@ -561,3 +561,8 @@ a.b.pri:hover{filter:brightness(1.08)}
 .cmp .pad{padding:10px 14px;margin:0}
 .cmp-r+.cmp-r{border-top:1px solid var(--line)}
 @media (max-width:640px){.cmpsum{grid-template-columns:1fr 1fr}.cmp4{grid-template-columns:1fr 1fr 1fr!important}.cmp4>span:first-child,.cmp4 .st-t{grid-column:1/-1}}
+.hist{display:flex;flex-direction:column;gap:10px;padding:14px;border-radius:12px;border:1px dashed var(--line-2)}
+.hist>b{font-size:14.5px;font-weight:750}
+.hist .note{margin:0}
+.hist5{grid-template-columns:minmax(0,1.3fr) 90px 90px 120px minmax(0,1fr)!important}
+@media (max-width:640px){.hist5{grid-template-columns:1fr 1fr!important}.hist5>span:first-child{grid-column:1/-1}}

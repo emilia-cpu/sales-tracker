@@ -14,6 +14,22 @@ export default function SheetCompare({ months, current, canWrite }) {
   const [res, setRes] = useState(null);
   const [err, setErr] = useState("");
   const [all, setAll] = useState(false);
+  const [hist, setHist] = useState(null);
+
+  // Earlier versions of the file: where agents' numbers went down (a typed number replaced by an older write).
+  async function history() {
+    setBusy("history"); setErr("");
+    try {
+      const r = await fetch(`/api/sheet/history?month=${encodeURIComponent(month)}`);
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || "Couldn't read the earlier versions.");
+      setHist(j);
+    } catch (e) {
+      setErr(e.message);
+    } finally {
+      setBusy("");
+    }
+  }
 
   async function run(fix) {
     setBusy(fix || "check"); setErr("");
@@ -53,9 +69,37 @@ export default function SheetCompare({ months, current, canWrite }) {
         <p className="muted">The team can type sign-ups into the sheet and log them here; both count. This reads <b>Lahore Sales Target.xlsx</b> fresh and checks {month}, agent by agent: what's in the sheet, what was logged here, and what was typed straight into the sheet.</p>
         <div className="setacts">
           <button className="b pri" disabled={!!busy} onClick={() => run(null)}>{busy === "check" ? "Comparing…" : res ? "Compare again" : "Compare now"}</button>
+          <button className="b" disabled={!!busy} onClick={history}>{busy === "history" ? "Checking earlier versions… (up to a minute)" : "Check earlier versions"}</button>
           {res && <span className="note">Sheet last edited {when(res.sheetEdited)}</span>}
         </div>
         {err && <div className="notice" role="alert">{err}</div>}
+
+        {hist && (
+          <div className="hist">
+            <b>Earlier versions{hist.from ? ` since ${when(hist.from)}` : ""}</b>
+            <p className="note">Checked {hist.versions} saved version{hist.versions === 1 ? "" : "s"} of the file{hist.truncated ? " (the most recent ones)" : ""}, from just before the app first wrote to it until it switched to adding.</p>
+            {!hist.drops.length
+              ? <div className="notice ok" role="status">No agent's sign-ups or accounts/sales went down between versions, so no typed numbers were replaced.</div>
+              : (
+                <>
+                  <div className="notice" role="status">{hist.drops.length} place{hist.drops.length === 1 ? "" : "s"} where a number went down. Open <b>File → Version history</b> in the sheet to look at the version before each one, and type back anything that was lost; it then counts on the dashboard too.</div>
+                  <div className="cmp">
+                    <div className="cmp-h hist5" aria-hidden="true"><span>Agent</span><span>Before</span><span>After</span><span>Saved</span><span>By</span></div>
+                    {hist.drops.map((d, i) => (
+                      <div className="cmp-r hist5 off" key={i}>
+                        <span><b>{d.agent}</b><small className="tm">{d.team}</small></span>
+                        <span className="num"><small>Before</small>{d.before}</span>
+                        <span className="num"><small>After</small>{d.after}</span>
+                        <span><small>Saved</small>{when(d.at)}</span>
+                        <span className="note"><small>By</small>{d.by || "—"}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="note">Numbers are sign-ups (accounts/sales). A drop in a version saved while someone was editing may be their own correction.</p>
+                </>
+              )}
+          </div>
+        )}
 
         {res && (
           <div className="cmpsum">
